@@ -1,0 +1,1073 @@
+Kubernates handson 
+=========WHERE-1 START=========
+Step 1: Creating the cluster
+To deploy an application in Kubernetes, create a Kubernetes cluster. To create a cluster, run the following command:
+SELECT 
+	minikube start
+To get the list of number of nodes running in the cluster, run the following command:
+SELECT 
+		kubectl get nodes
+To get the list of number of nodes running in the cluster, run the following command:
+		kubectl cluster-info
+
+DESC Creating the deployment.
+	A deployment object is used to deploy a containerized application in the Kubernetes cluster.
+
+DESC To create a deployment, run the following command:
+SELECT 
+		kubectl run firstapp --image=gcr.io/google-samples/kubernetes-bootcamp:v1 --port=8080
+To get information about the number of deployments created, run the following command:
+SELECT 
+		kubectl get deployments
+To get the description of the firstapp deployment, run the command:
+SELECT 
+		kubectl describe deployments/firstapp
+
+Exposing the application to the local VM
+To expose the application to the local VM, create a service object. A service object is used to expose the application. Run the following command:
+SELECT 
+		kubectl expose deployment/firstapp --type="NodePort" --port 8080
+To get information about the number of service objects, run the following command:
+SELECT 
+		kubectl get svc
+To get the description of the firstapp-svc service, run the following command:
+SELECT 
+		kubectl describe svc/firstapp 
+Running the application
+To run the application, use the curl command. To get the node port number, use the following command:
+SELECT 
+		kubectl describe svc/firstapp 
+To store the nodeport number in an environment variable, run the following command:
+SELECT 
+		export NODE_PORT=$(kubectl get services/firstapp -o go-template='{{(index .spec.ports 0).nodePort}}')
+		echo NODE_PORT=$NODE_PORT
+DESC Run the following command:
+SELECT
+		curl $(minikube ip):$NODE_PORT
+=========WHERE-1 END=========
+
+=========WHERE START Kubernetes - Handson 3=========
+DESC Step 1 :Creating Cluster
+To deploy an application in the Kubernetes cluster, run the following command to create the cluster:
+SELECT 
+	minikube start
+To get information about the cluster, run the following command:
+SELECT
+	kubectl cluster-info
+DESC Step 2: Create a Deployment Object
+To create a deployment using a 'YAML' file, create a deployment.yaml file that contains information of the number of replicas and the images to be used. Write the following YAML code to deployment.yaml.
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: webapp1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: webapp1
+    spec:
+      containers:
+      - name: webapp1
+        image: katacoda/docker-http-server:latest
+        ports:
+        - containerPort: 80
+To create the deployment object, run the following command:
+SELECT 
+	kubectl create -f deployment.yaml
+To get information about the number of deployments created, type the following command:
+SELECT 
+		kubectl get deployments
+To get information of a particular deployment, run the following command:
+SELECT 
+	kubectl describe deployments/webapp1
+DESC Step 3: Create the Service Object
+To create a service using a 'YAML' file, create a service.yaml file that contains information of the type of service and the port numbers. Copy the following YAML code to service.yaml:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp1-svc
+  labels:
+    app: webapp1
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    nodePort: 30080
+  selector:
+    app: webapp1
+	
+To create the service object, run the following command:
+SELECT 
+		kubectl create -f service.yaml
+To get information about the number of services created, type the following command:
+	kubectl get svc
+To get information about a particular service, run the following command:
+
+	kubectl describe svc/webapp-svc
+
+DESC Step 4: Running the application
+To run the application by using the service NodePort exposing port number 30080, run the curl command:
+curl host01:30080
+=========WHERE END Kubernetes - Handson 3=========
+=========WHERE START Kubernetes - Handson 4=========
+Starting the Minikube
+Start the Minikube environment by executing the following command:
+	minikube start
+To check the Minikube version, run the following command:
+		minikube version
+To get information about the cluster, run the following command:
+		kubectl cluster-info
+To check if the docker is installed and running, use the following command:
+		docker -v
+		
+DESC Pulling the docker image and creating deployment object
+To run the node-js application, pull the following container image from docker hub:
+
+	docker pull gautam1995/nodejs-example
+
+To check if the image is pulled to the local VM, run the following command:
+
+	docker images and look up the gautam1995/nodejs-example image.
+
+To create a deployment using a YAML file, create a deployment.yaml file that contains information of the number of replicas and images to be used. Write the following YAML code to deployment.yaml:
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: webapp1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: webapp1
+    spec:
+      containers:
+      - name: webapp1
+        image: katacoda/docker-http-server:latest
+        ports:
+        - containerPort: 80
+
+To create the deployment object, run the following command:
+
+kubectl create -f deployment.yaml
+
+To get information about the number of deployments created, type the following command:
+
+kubectl get deployments
+
+To get information of a particular deployment, run the following command:
+
+kubectl describe deployments/webapp1
+
+Creating the Service object
+To create a Service using a 'YAML' file, create a service.yaml file that contains information of the type of service and the port numbers. Copy the following YAML code to service.yaml:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp1-svc
+  labels:
+    app: webapp1
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    nodePort: 30080
+  selector:
+    app: webapp1
+To create the service object, run the following command:
+
+kubectl create -f service.yaml
+
+To get information about the number of services created, type the following command:
+
+kubectl get svc
+
+To get information of a particular service, run the following command:
+
+kubectl describe svc/webapp1-svc
+
+Running the application
+To run the application by using the service NodePort exposing port number 30080, run the curl command:
+
+curl host01:30080
+
+=========WHERE END Kubernetes - Handson 4=========
+
+=========WHERE START Kubernetes - Container Lifecycle Hook - Handson 5=========
+Start Kubernetes cluster
+Spin the minikube cluster: 
+		minikube start
+Wait for minikube to start.
+Deploy a nginx pod
+Save 'yaml' as 'pod-conf.yaml'.
+
+echo "apiVersion: v1
+kind: Pod
+metadata:
+    name: lifecycle-hook-demo
+spec:
+    containers:
+        -
+            name: lifecycle-hook-container
+            image: nginx
+            lifecycle: {postStart: {exec: {command: [/bin/sh, '-c', 'echo Hello from Fresco Team > /usr/share/message']}}, preStop: {exec: {command: [/usr/sbin/nginx, '-s', quit]}}}">pod-conf.yaml
+Create the pod:
+
+kubectl create -f pod-conf.yaml
+
+Wait for the nginx pod to be created.
+
+Verify the lifecycle hook
+Check if the command is executed or not.
+
+List all the pods: 
+		kubectl get pods
+
+Wait for the status to change to Running. Grab the lifecycle-hook-demo pod and enter:
+
+kubectl exec -it lifecycle-hook-demo -- /bin/bash
+
+You are in the nginx container.
+
+Cat the message:
+
+cat /usr/share/message
+
+You should be able to view the message Hello from Fresco Team.
+
+
+=========WHERE END Kubernetes - Container Lifecycle Hook - Handson 5=========
+
+=========WHERE START Kubernetes Pod 6=========
+
+Start Kubernetes Cluster
+Spin the minikube cluster: minikube start Wait for minikube to start.
+
+Create a Pod
+Open the nano/vi editor, and paste yaml code, and save file as pod-conf.yaml.
+
+echo "apiVersion: v1
+kind: Pod
+metadata:
+    name: nginx
+    labels:
+        name: nginx
+spec:
+    containers:
+        -
+            name: nginx
+            image: nginx
+            ports: [{containerPort: 80}]">pod-conf.yaml
+Create the Pod:
+
+kubectl create -f pod-conf.yaml
+
+Wait for the pod to be created.
+
+Verify by running: kubectl get pods
+
+Connect to nginx
+Since the container cannot be directly accessed inside the pod, a service or port-forward facility must be used.
+
+Use port-forward, and run the following command: kubectl port-forward nginx 8001:80 &
+
+The 80 port will be mapped inside the nginx pod, to the host's 8001 port.
+
+Curl to localhost:8001: curl localhost:8001
+
+The nginx's homepage html is displayed.
+
+=========WHERE END Kubernetes Pod 6=========
+
+=========WHERE START Kubernetes - Namespaces 7=========
+Start kubernetes cluster
+Spin the minikube cluster: 
+	minikube start 
+Wait for minikube to start.
+
+Create a namespace
+List all the namespaces: kubectl get namespaces
+
+The Kubernetes namespaces are displayed.
+
+Whenever a pod is deployed, it is deployed to the default namespace.
+
+Open the nano/vim editor, paste 'yaml', and save it as 'ns.yaml'.
+
+Note: The yaml format should be preserved, if not, kubectl will return an error.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: testns
+Create the namespace: kubectl create -f ns.yaml
+
+List all the namespaces again: kubectl get namespaces
+
+The newly created namespace is displayed.
+
+Deploy a pod to namspce
+Deploy nginx to the testns namespace:
+
+kubectl run ngnix --image=nginx --replicas=2 --namespace=testns
+
+Get the pods: kubectl get pods
+
+Nothing is displayed, because Kubernetes uses the default namespace. Therefore, grab pods from the testns namespace: kubectl get pods -n testns
+
+Note: You can also execute kubectl get pods --all-namespaces to view all pods across the namespaces.
+
+
+=========WHERE END Kubernetes - Namespaces 7=========
+
+=========WHERE START Kubernetes Deployment 8=========
+Start Kubernetes Cluster
+Spin the minikube cluster: minikube start Wait for minikube to start.
+Create a deployment
+Save the following 'yaml' as depl.yaml:
+
+echo "apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: nginx-test-deployment
+    labels:
+        app: nginx-test
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: nginx-test
+    template:
+        metadata:
+            labels: {app: nginx-test}
+        spec:
+            containers: [{name: nginx-test, image: 'nginx:1.15', ports: [{containerPort: 80}]}]">depl.yaml
+Create the deployment by running: kubectl apply -f depl.yaml
+
+Check the pod status by running: kubectl get pods
+
+Two replicas should run.
+
+Wait for the pods to be created.
+
+Scale deployment
+List all the deployment: kubectl get deploy
+
+Hint: Use replica flag.
+
+Scale the deployment to 4 pods.
+
+	kubectl scale --replicas=4 -f depl.yaml
+
+Check the status of the deployment by running: kubectl rollout status deployment nginx-test-deployment
+
+
+Change nginx image
+Update the nginx image running in nginx-test-deployment to 1.9.1.
+
+Hint: Use image flag along with the container name.
+
+	kubectl set image deployment nginx-test-deployment nginx-test=nginx:1.9.1 --record
+	
+Check the status of the deployment by running: kubectl rollout status deployment nginx-test-deployment
+
+Verify the change: kubectl describe deployments
+
+=========WHERE END Kubernetes Deployment 8=========
+
+
+=========WHERE START Kubernetes - Service 9=========
+Start Kubernetes Cluster
+Spin the minikube cluster: minikube start Wait for minikube to start.
+
+Deploy nginx
+Use the following 'yaml' to deploy nginx:
+
+echo "apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: nginx-test-deployment
+    labels:
+        app: nginx-test
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: my-app
+    template:
+        metadata:
+            labels: {app: my-app}
+        spec:
+            containers: [{name: nginx-test, image: 'nginx:1.9.1', ports: [{containerPort: 80}]}]" >depl.yaml
+Hint: Use kubectl apply command on depl.yaml.
+
+	kubectl apply -f depl.yaml
+	kubectl get pods
+	
+Wait for the pods to be created.
+
+Create a Service
+Create a service which exposes port 30080 using NodePort.
+
+Save the yaml to svc.yaml.
+
+echo "kind: service
+apiVersion: v1
+metadata:
+    name: my-test-service
+spec:
+    selector:
+        app: my-app
+    ports:
+        -
+            protocol: TCP
+            port: 80
+            targetPort: 80
+            nodePort: 30080
+    type: NodePort">svc.yaml
+Create service using kubectl: kubectl apply -f svc.yaml
+
+TODO correct the service in kind
+Access the Service
+Open the following URL to access the service:
+
+https://2886795345-30080-host09-fresco.environments.katacoda.com/
+
+You should be able to view the nginx homepage.
+
+=========WHERE END Kubernetes - Service 9=========
+
+=========WHERE START Kubernetes - Ingress 10=========
+Start Kubernetes Cluster
+Spin the minikube cluster: minikube start Wait for minikube to start.
+Create Deployment
+Use the following 'yaml' to deploy nginx and my-app:
+
+echo "apiVersion: apps/v1
+kind: deployment
+metadata:
+    name: nginx-test-deployment
+    labels:
+        app: nginx-test
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: my-app
+    template:
+        metadata:
+            labels: {app: my-app}
+        spec:
+            containers: [{name: nginx-test, image: 'nginx:1.9.1', ports: [{containerPort: 80}]}]
+---
+apiVersion: apps/v1
+kind: deployment
+metadata:
+    name: myapp-test-deployment
+    labels:
+        app: myapp-test
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: my-app
+    template:
+        metadata:
+            labels: {app: my-app}
+        spec:
+            containers: [{imagePullPolicy: Never, name: my-app-test, image: fresco/node-http, env: [{name: msg, value: 'hello from ingress app'}], ports: [{containerPort: 8001}]}]" >depl.yaml
+Hint: Use kubectl apply command on depl.yaml.
+
+	kubectl apply -f depl.yaml
+
+Wait for the pods to be created.
+
+Correct the deployment in kind at both places
+kubectl get pods
+
+Create Service
+Create a service to expose nginx and my-app.
+
+Save the yaml to svc.yaml.
+
+echo "kind: Service
+apiVersion: v1
+metadata:
+    name: my-test-service
+spec:
+    selector:
+        app: my-app
+    ports:
+        -
+            protocol: TCP
+            port: 80
+            targetPort: 80
+            nodePort: 30080
+    type: NodePort
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: myapp-test-service
+spec:
+    selector:
+        app: my-app
+    ports:
+        -
+            protocol: TCP
+            port: 8001
+            targetPort: 8001
+            nodePort: 30081
+    type: NodePort
+">svc.yaml
+Create service using kubectl: kubectl apply -f svc.yaml
+
+Add Ingress
+Since the minikube environment is used, Ingress must be enabled: minikube addons enable ingress
+
+Create an ingress object:
+
+echo "apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: test-ingress
+    annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+    rules:
+        -
+            http: {paths: [{path: /nginxpath, backend: {serviceName: my-test-service, servicePort: 80}}, {path: /apppath, backend: {serviceName: myapp-test-service, servicePort: 8001}}]}">ingress.yaml
+kubectl apply -f ingress.yaml
+
+Access Ingress
+Check if Ingress is ready by running:
+
+kubectl describe ing test-ingress
+
+Ingress events should change from <none> to the relevant message, for Ingress to get activated. Wait for 3-5 minutes for Ingress to start.
+
+Open the following URL to access the nginx service: https://2886795355-80-host01-fresco.environments.katacoda.com/nginxpath
+
+You should be able to view the nginx homepage.
+
+Open the following URL to access the my-app service:
+
+https://2886795355-80-host01-fresco.environments.katacoda.com/apppath
+
+You should be able to view the message hello from ingress app.
+
+=========WHERE END Kubernetes - Ingress 10=========
+
+=========WHERE START Kubernetes Stateless Application 11=========
+
+Start Cluster
+Launch minikube cluster.
+	minikube start
+	
+Create Service for MongoDB
+Expose MongoDB inside the cluster:
+
+echo "apiVersion: v1
+kind: service
+metadata:
+    name: mongo
+spec:
+    ports:
+        -
+            port: 27017
+            targetPort: 27017
+    selector:
+        app: mongo">mongo-svc.yaml
+Hint: Use kubectl on the mongo-svc.yaml file.
+
+	kubectl apply -f mongo-svc.yaml
+
+Deploy mongoDb
+Use the following yaml to deploy MongoDb in the cluster:
+
+echo "apiVersion: apps/v1
+kind: deployment
+metadata:
+    name: mongo
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: mongo
+    template:
+        metadata:
+            labels: {app: mongo}
+        spec:
+            containers: [{name: mongo, image: 'mongo:4.1', ports: [{containerPort: 27017, protocol: TCP}]}]">mongo-depl.yaml
+Hint: Use kubectl on the mongo-depl.yaml file.
+	kubectl apply -f mongo-depl.yaml
+
+Wait till the pods are created.
+	kubectl get deployoments
+	kubectl get pods
+	
+Create Service for NodeJs app
+Use the following yaml to expose port 30800 outside the cluster. This service will be used by the nodejs app.
+
+echo "apiVersion: v1
+kind: Service
+metadata:
+  name: node-mongo-page-hit
+spec:
+  selector:
+    app: node-mongo-page-hit
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30800">node-svc.yaml
+Hint: Use kubectl on the node-svc.yaml file.
+
+	kubectl apply -f node-svc.yaml
+	
+Deploy NodeJs app
+Deploy the NodeJs app using the following 'yaml':
+
+echo "apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: node-mongo-page-hit
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: node-mongo-page-hit
+    template:
+        metadata:
+            labels: {app: node-mongo-page-hit}
+        spec:
+            containers: [{imagePullPolicy: Never, name: node-mongo-page-hit, image: 'fresco/node-mongo-page-hit:latest', ports: [{containerPort: 8000, protocol: TCP}], env: [{name: PORT, value: '8000'}]}]">node-depl.yaml
+Hint: Use kubectl on the node-depl.yaml file.
+
+	kubectl apply -f node-depl.yaml
+	
+	kubectl get svc
+
+Wait till the pods are created.
+
+Access the Application
+Open the following URL to view the app:
+
+https://2886795293-30800-host01-fresco.environments.katacoda.com
+
+Each time you refresh, the page count increases.
+
+Scale mongoDb
+Scale MongoDB to 4 replicas.
+	kubectl scale --replicas=4 -f node-depl.yaml
+
+Wait till all the pods are created.
+		kubectl get pods
+
+Access the App again
+Open the following URL to view the app:
+
+https://2886795293-30800-host01-fresco.environments.katacoda.com
+
+Each time you refresh, a random count is displayed.
+
+Why?
+
+Since we scaled MongoDB, each pod gets its own storage and nodes (true for multi-node clusters). Therefore, even though the same application level code is used, each request sent by the NodeJS app is handled by a random MongoDB pod. Hence, the random count.
+
+=========WHERE END Kubernetes Stateless Application 11=========
+
+=========WHERE START Kubernetes - ConfigMap 12=========
+Start Cluster
+Launch minikube cluster.
+	minikube start
+
+Create ConfigMap
+Create a ConfigMap named fresco-config.
+
+Add key SERVER_URL.
+
+Add value https://www.fresco.me.
+
+Verify if the ConfigMap is created.
+
+kubectl create configmap fresco-config --from-literal=SERVER_URL='https://www.fresco.me'
+
+kubectl describe configmaps fresco-config
+kubectl get configmaps fresco-config -o yaml
+
+Create a Pod
+Create a busibox pod with the environmental variable SERVER_URL_ENV.
+
+Use the ConfigMap created earlier, and assign a value to it:
+
+echo "apiVersion: v1
+kind: Pod
+metadata:
+    name: env-conf-test-pod
+spec:
+    containers:
+        -
+            name: env-conf-test-container
+            image: busybox
+            command: [/bin/sh, '-c', 'sleep 10000000']
+            env: [{name: SERVER_URL_ENV, valueFrom: {configMapKeyRef: {name: fresco-config, key: SERVER_URL}}}]
+    restartPolicy: Never">pod.yaml
+Wait till the pod is created.
+
+	kubectl create -f pod.yaml
+	kubectl get pods
+	
+TO-DO Verify it
+Execute the following command to enter the pod: kubectl exec -it env-conf-test-pod sh
+
+Find the environmental variable: env | grep SERVER_URL_ENV
+
+The server URL specified in ConfigMap will be displayed.
+
+
+=========WHERE END Kubernetes - ConfigMapn 12=========
+
+=========WHERE START Kubernetes Secrets 13=========
+Start Cluster
+Launch minikube cluster.
+	minikube start
+
+Create Secret
+Create a Secret fresco-secret using:
+
+data:
+   user:admin
+   pass:pass
+Verify the Secret creation.
+
+kubectl create secret generic fresco-secret --from-literal=user=admin --from-literal=pass=pass
+
+kubectl get secrets
+kubectl describe secrets/fresco-secret
+
+kubectl get secret fresco-secret -o yaml
+
+Run a busybox pod with secrets
+Create a pod using the following configuration:
+
+echo "apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-test-pod
+spec:
+  containers:
+  - name: secret-test-container
+    image: busybox
+    command: [/bin/sh, '-c', 'sleep 100000']
+    volumeMounts:
+    - name: test
+      mountPath: "/etc/test"
+      readOnly: true
+  volumes:
+  - name: test
+    secret:
+      secretName: fresco-secret ">pod.yaml
+	  
+	kubectl create -f pod.yaml
+
+Verify the secret
+Open the pod:
+
+kubectl exec -it secret-test-pod sh
+
+List the Secret files:
+
+ls /etc/test
+
+View the contents (base64 encoded) of the Secret file:
+
+cat /etc/test/(put start here)
+
+To view the content of the Secret:
+
+cat /etc/test/(put start here)| base64 -d
+
+
+=========WHERE END Kubernetes Secrets 13=========
+
+=========WHERE START Kubernetes PVs and PVCs 14=========
+Hands-on Explanantion
+Create an nginx pod, and mount a local (hostpath) to it by using Persistent Volume (PV) and Persistent Volume Claims (PVC).
+
+Launch minikube.
+	minikube start
+Create index file for Nginx
+Create an html file named index.html, and content Fun learning with Fresco at /mnt/fresco/.
+
+mkdir /mnt/fresco
+echo "Fun learning with Fresco" > /mnt/fresco/index.html
+
+Create a Persistent Volume
+Create a PV named fresco-pv using the following parameters:
+
+storageClassName - manual
+capacity - 100MB 
+accessMode - ReadWriteOnce
+hostPath - /mnt/fresco
+
+vi fresco-pv.yaml
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: fresco-pv
+  labels:
+    type: host-local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/fresco"
+	
+kubectl apply -f fresco-pv.yaml
+
+Create a Persistent Volume Claim
+Create a PVC named fresco-pvc, and request for 50MB.
+
+To verify successful creation, ensure it is bound to fresco-pv
+
+vi fresco-pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: fresco-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+	  
+kubectl apply -f fresco-pvc.yaml
+
+Run kubectl get pv to make sure its status is BOUND and it is bound to fresco-pvc
+
+Create Nginx Pod
+Create an nginx pod named fresco-pod using the following parameters:
+
+Request for fresco-pvc as a volume
+Use /usr/share/nginx/html for mount path.
+Hint: Use kubectl describe pod fresco-pod for debugging.
+
+vi fresco-pod.yaml
+kind: Pod
+apiVersion: v1
+metadata:
+  name: fresco-pod
+spec:
+  volumes:
+    - name: fresco-pv-storage
+      persistentVolumeClaim:
+       claimName: fresco-pvc
+  containers:
+    - name: fresco-pv-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "nginx-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: fresco-pv-storage
+
+kubectl apply -f fresco-pod.yaml
+
+Create Nginx Pod
+Create an nginx pod named fresco-pod using the following parameters:
+
+Request for fresco-pvc as a volume
+Use /usr/share/nginx/html for mount path.
+Hint: Use kubectl describe pod fresco-pod for debugging.
+
+Verify the mount
+Enter the nginx shell, and ensure that the html file created earlier is accessible.
+
+
+# Enter into the pod shell
+$ kubectl exec -it  fresco-pod sh
+# cat index file content
+$ cat /usr/share/nginx/html/index.html
+
+=========WHERE END Kubernetes PVs and PVCs 14=========
+
+
+=========WHERE START Kubernetes - Security 15=========
+Start cluster
+In this hands-on, you will create a user emp and assign 'read' rights on pods belonging to the namespace dev.
+
+Start minikube with RBAC enabled.
+
+minikube start --extra-config=apiserver.Authorization.Mode=RBAC
+
+Create a namespace
+Create a namespace named dev.
+kubectl create namespace dev
+
+Create private key
+Use openssl, and create a private key named emp.key.
+
+openssl genrsa -out emp.key 2048
+
+Create a sign request
+Create a certificate sign request named emp.csr using the private key generated earlier.
+
+Use the following information:
+
+name :emp
+group: dev
+
+openssl req -new -key emp.key -out emp.csr -subj "/CN=emp/O=dev"
+
+Approve csr
+Generate emp.crt by approving the request created earlier.
+
+Hint: The kube-ca files are available at ~/.minikube/..
+
+openssl x509 -req -in emp.csr -CA CA_FOLDER/ca.crt -CAkey CA_FOLDER/ca.key -CAcreateserial -out emp.crt -days 500
+openssl x509 -req -in emp.csr -CA ~/.minikube/./ca.crt -CAkey ~/.minikube/./ca.key -CAcreateserial -out emp.crt -days 500
+
+Note: Change CA_FOLDER value by either ~/.minikube/. or /etc/kubernetes/pki/. based on your CA files location.
+
+Create context
+Create a new context pointing to the cluster minikube, and name it dev-ctx. It should point to the namespace dev, and the user should be emp.
+kubectl config set-context dev-ctx --cluster=minikube --namespace=dev --user=emp
+
+Set credentials
+Set credentials for emp.
+
+Use emp.key and emp.crt created earlier.
+
+kubectl config set-credentials emp --client-certificate=./emp.crt  --client-key=./emp.key
+
+The above command sets credentials to user employee.
+
+Run cat ~/.kube/config. You should see above added information in that config file.
+
+create a role
+Create a role named emp-role, and assign get, run access on pods and deployments(use dev namespace).
+
+vi emp-role.yaml
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  namespace: dev
+  name: emp-role
+rules:
+- apiGroups: ["", "extensions", "apps"]
+  resources: ["deployments",  "pods"]
+  verbs: ["get","run", "list", "watch"] 
+
+kubectl create -f emp-role.yaml
+
+Add role binding
+Bind emp to the role emp-role created earlier, and name it emp-bind.
+
+vi emp-bind.yaml
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: emp-bind
+  namespace: dev
+subjects:
+- kind: User
+  name: emp
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: emp-role
+  apiGroup: ""
+
+kubectl create -f emp-bind.yaml
+
+create a pod
+Run an nginx pod under the dev-ctx and dev namespace and nginx name.
+
+kubectl run ngnix --image=nginx  --namespace=dev
+
+kubectl run ngnix --image=nginx  --namespace=dev-ctx
+
+Execute kubectl --context=dev-ctx get pods -o wide, and ensure it is deployed.
+
+If you try to execute kubectl --context=dev-ctx get pods -n default, a forbidden error appears. This is because only employees are authorized to access the dev namespace
+
+--------
+create a pod
+Run an nginx pod under the dev-ctx and dev namespace and nginx name.
+
+Execute kubectl --context=dev-ctx get pods -o wide, and ensure it is deployed.
+
+If you try to execute kubectl --context=dev-ctx get pods -n default, a forbidden error appears. This is because only employees are authorized to access the dev namespace.
+kubectl run nginx --image=nginx --namespace=dev
+
+kubectl run nginx --image=nginx --port=80 --restart=Never`
+pod/nginx created
+--------------
+
+=========WHERE END Kubernetes - Security 15=========
+
+=========WHERE START Kubernetes - Prometheus 16=========
+Download and Start cluster
+Remove older version of minikube: sudo minikube delete
+
+Download the new version: curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.3.1/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
+
+Spin the minikube cluster: minikube start --kubernetes-version=v1.13.4 \
+--memory=4096 \
+--bootstrapper=kubeadm \
+--extra-config=scheduler.address=0.0.0.0 \
+--extra-config=controller-manager.address=0.0.0.0 Wait for minikube to start.
+
+Create service account: kubectl create serviceaccount tiller --namespace kube-system
+
+Create role binding: kubectl create clusterrolebinding tiller-role-binding --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+---
+Create Configuration
+Create a configuration file to turn RBAC off.
+
+echo 'rbac:
+  create: false
+server:
+  name: server
+
+  service:
+    nodePort: 30001
+    type: NodePort'>values.yaml
+Initialize the Helm:
+
+helm init --service-account tiller
+
+Wait for Helm to start.
+----
+
+---
+Install Prometheus
+Use Helm to install Prometheus on Kubernetes:
+
+helm install stable/prometheus-operator --version=4.3.6 --name=monitoring --namespace=monitoring --values=values.yaml
+
+If the message Error: could not find a ready tiller pod appears, wait for some time and try again.
+
+Wait till all the Prometheus pods are created.
+
+kubectl --namespace monitoring get pods -l "release=monitoring"
+
+
+---
+
+
+=========WHERE END Kubernetes - Prometheus 16=========
